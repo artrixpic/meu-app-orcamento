@@ -1,6 +1,48 @@
-/* Print styles */
 @media print {
+    /* Esconde elementos de navegação e UI */
+    aside, button, input[type="range"], .no-print {
+        display: none !important;
+    }
+
+    /* Reseta cores para papel branco */
     body {
-        font-size: 12pt;
+        background-color: white !important;
+        color: black !important;
+        font-family: 'Helvetica', sans-serif !important;
+    }
+
+    /* Remove os efeitos de vidro e bordas escuras */
+    .glass {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-bottom: 20px !important;
+    }
+
+    /* Força textos brancos a virarem pretos */
+    .text-white, .text-gray-300, .text-gray-400 {
+        color: black !important;
+    }
+
+    /* Inputs viram texto normal */
+    input, select {
+        border: none !important;
+        background: transparent !important;
+        color: black !important;
+        padding: 0 !important;
+        font-weight: bold;
+    }
+
+    /* Ajuste de layout */
+    main {
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* Destaque do preço final */
+    #final_price_display {
+        color: black !important;
+        font-size: 24pt !important;
     }
 }

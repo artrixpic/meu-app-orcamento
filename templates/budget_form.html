@@ -1,11 +1,125 @@
-{% extends 'base.html' %}
-
-{% block title %}Orçamento{% endblock %}
-
+{% extends "base.html" %}
 {% block content %}
-    <h1>Formulário de Orçamento</h1>
-    <form>
-        <!-- Adicionar campos aqui -->
-        <button type="submit">Enviar</button>
-    </form>
+<form method="POST" class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+    
+    <div class="lg:col-span-2 space-y-6">
+        <div class="glass p-6 rounded-2xl space-y-4">
+            <h2 class="text-xl font-bold text-white mb-4">Dados do Projeto</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" name="client" required placeholder="Nome do Cliente" class="bg-dark-900 border border-dark-700 rounded-lg p-3 text-white w-full">
+                <input type="text" name="title" required placeholder="Título do Vídeo/Job" class="bg-dark-900 border border-dark-700 rounded-lg p-3 text-white w-full">
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">👷 Mão de Obra</h3>
+            <div class="flex justify-between items-center bg-dark-900 p-4 rounded-lg mb-2">
+                <div>
+                    <p class="text-gray-300">Minha Diária (8h)</p>
+                    <p class="text-xs text-gray-500">Baseado no seu custo de vida</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="labor_days" value="1" min="0" class="w-16 bg-dark-800 border border-dark-700 rounded p-2 text-center text-white" oninput="calculateTotal()">
+                    <span class="text-gray-400">dias x R$ <span id="hourly_rate_display">{{ "%.2f"|format(config.hourly_rate * 8) }}</span></span>
+                </div>
+            </div>
+            <input type="hidden" id="base_daily_rate" value="{{ config.hourly_rate * 8 }}">
+        </div>
+
+        <div class="glass p-6 rounded-2xl">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">📷 Equipamentos</h3>
+            <div id="gear_list" class="space-y-2">
+                </div>
+            
+            <div class="mt-4 flex gap-2">
+                <select id="gear_select" class="flex-1 bg-dark-900 border border-dark-700 rounded-lg p-2 text-white text-sm">
+                    <option value="0">Selecionar do meu acervo...</option>
+                    {% for gear in gears %}
+                    <option value="{{ gear.rental_value }}">{{ gear.name }} (+ R$ {{ "%.2f"|format(gear.rental_value) }})</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="addGear()" class="bg-dark-700 hover:bg-dark-600 px-4 rounded-lg text-white font-bold">+</button>
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">🚗 Gastos Extras</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-gray-500 text-sm">R$</span>
+                    <input type="number" id="extra_cost" value="0" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-3 pl-8 text-white" oninput="calculateTotal()" placeholder="Valor Total (Uber, HD...)">
+                </div>
+                <input type="text" placeholder="Descrição (Opcional)" class="bg-dark-900 border border-dark-700 rounded-lg p-3 text-white text-sm">
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-1">
+        <div class="glass p-6 rounded-2xl sticky top-4 border border-neon-500/30">
+            <h3 class="text-xl font-bold text-white mb-6">Fechamento 💰</h3>
+            
+            <div class="space-y-4 text-sm mb-6">
+                <div class="flex justify-between text-gray-400">
+                    <span>Custo Produção (Interno)</span>
+                    <span class="text-white">R$ <span id="display_cost">0.00</span></span>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between text-gray-400 mb-1">
+                        <span>Margem de Lucro</span>
+                        <span class="text-neon-400 font-bold"><span id="margin_display">30</span>%</span>
+                    </div>
+                    <input type="range" name="margin_range" id="margin_range" min="10" max="60" value="30" class="w-full accent-neon-500" oninput="calculateTotal()">
+                </div>
+
+                <div class="flex justify-between text-gray-400 items-center">
+                    <span>Imposto (Nota Fiscal)</span>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="tax_input" value="0" class="w-12 bg-dark-900 border border-dark-700 rounded p-1 text-center text-white text-xs" oninput="calculateTotal()">
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-dark-700 pt-6">
+                <p class="text-gray-400 text-xs uppercase mb-1">Valor Mínimo a Cobrar</p>
+                <p class="text-4xl font-bold text-neon-500 mb-2">R$ <span id="final_price_display">0.00</span></p>
+                <p class="text-xs text-red-400" id="alert_msg"></p>
+            </div>
+
+            <input type="hidden" name="total_cost_input" id="total_cost_input">
+            <input type="hidden" name="final_price_input" id="final_price_input">
+
+            <div class="mt-8 space-y-3">
+                <button type="submit" class="w-full bg-neon-500 hover:bg-neon-600 text-dark-900 font-bold py-3 rounded-xl transition">Salvar Orçamento</button>
+                <button type="button" onclick="window.print()" class="w-full bg-dark-800 hover:bg-dark-700 text-white font-medium py-3 rounded-xl transition border border-dark-700">🖨️ Gerar PDF</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    let gearTotal = 0;
+    
+    function addGear() {
+        const select = document.getElementById('gear_select');
+        const value = parseFloat(select.value);
+        const name = select.options[select.selectedIndex].text;
+        
+        if(value > 0) {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center bg-dark-900 p-3 rounded text-sm text-gray-300 gear-item';
+            div.dataset.value = value;
+            div.innerHTML = `<span>${name}</span> <button type="button" onclick="removeGear(this)" class="text-red-500 font-bold">x</button>`;
+            
+            document.getElementById('gear_list').appendChild(div);
+            calculateTotal();
+        }
+    }
+
+    function removeGear(btn) {
+        btn.parentElement.remove();
+        calculateTotal();
+    }
+</script>
 {% endblock %}
