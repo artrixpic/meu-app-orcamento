@@ -6,6 +6,7 @@
         <p class="text-gray-400 mb-8">Antes de orçar, precisamos saber quanto vale a sua hora para você não ter prejuízo.</p>
 
         <form method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="block text-sm font-medium text-gray-400 mb-1">Quanto você quer ganhar/lucrar por mês?</label>
                 <div class="relative">

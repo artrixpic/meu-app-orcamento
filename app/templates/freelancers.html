@@ -2,11 +2,13 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-white">Meus Freelas 🤝</h2>
+        <h2 class="text-2xl font-bold text-white">Meus Freelas </h2>
     </div>
 
     <div class="glass p-6 rounded-2xl mb-8">
-        <form method="POST" class="flex flex-col md:flex-row gap-4 items-end">
+        <form action="{{ url_for('operations.freelancers') }}" method="POST" class="flex flex-col md:flex-row gap-4 items-end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
             <div class="flex-1 w-full">
                 <label class="block text-xs text-gray-400 mb-1">Nome</label>
                 <input type="text" name="name" required class="w-full bg-dark-900 border border-dark-700 rounded-lg p-3 text-white" placeholder="Ex: João Editor">
@@ -17,7 +19,7 @@
             </div>
             <div class="w-full md:w-40">
                 <label class="block text-xs text-gray-400 mb-1">Diária (R$)</label>
-                <input type="number" name="daily_rate" required class="w-full bg-dark-900 border border-dark-700 rounded-lg p-3 text-white" placeholder="0.00">
+                <input type="number" name="daily_rate" step="0.01" required class="w-full bg-dark-900 border border-dark-700 rounded-lg p-3 text-white" placeholder="0.00">
             </div>
             <button type="submit" class="bg-neon-500 hover:bg-neon-600 text-dark-900 font-bold p-3 rounded-lg w-full md:w-12 text-xl transition">+</button>
         </form>
@@ -31,7 +33,17 @@
             </div>
             <div class="flex items-center gap-6">
                 <p class="text-neon-400 font-bold">R$ {{ "%.2f"|format(freela.daily_rate) }}/dia</p>
-                <a href="{{ url_for('delete_freelancer', id=freela.id) }}" class="text-red-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">Excluir</a>
+
+                <div class="flex gap-2">
+                    <a href="{{ url_for('operations.edit_freelancer', id=freela.id) }}" class="bg-dark-800 hover:bg-dark-700 p-2 rounded text-gray-300 text-sm transition">✏️</a>
+
+                    <form action="{{ url_for('operations.delete_freelancer', id=freela.id) }}" method="POST" onsubmit="return confirm('Excluir este freelancer?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-red-500 hover:bg-red-500/20 p-2 rounded transition opacity-50 group-hover:opacity-100">
+                            🗑️
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
         {% else %}

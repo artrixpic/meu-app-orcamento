@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cineflux</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { colors: { dark: { 900: '#0f111a', 800: '#1a1d2d', 700: '#2a2f45', 600: '#323854' }, neon: { 500: '#00ffa3', 600: '#00cc82' } }, fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
+    </script>
+    <style>
+        body { background-color: #0f111a; color: white; }
+        .glass { background: rgba(26, 29, 45, 0.6); backdrop-filter: blur(10px); }
+        @media print { .sidebar, .mobile-header { display: none !important; } main { margin: 0 !important; padding: 0 !important; width: 100% !important; } }
+        
+        /* Animação simples para entrada das mensagens */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-bounce-in { animation: slideIn 0.3s ease-out forwards; }
+    </style>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body class="flex h-screen overflow-hidden font-sans bg-dark-900">
+    
+    <div class="fixed top-5 right-5 z-50 flex flex-col gap-2 w-full max-w-sm pointer-events-none">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="pointer-events-auto p-4 rounded-xl shadow-2xl text-white text-sm font-bold animate-bounce-in
+                        {% if category == 'error' %} bg-red-500 border border-red-400
+                        {% elif category == 'success' %} bg-green-500 border border-green-400
+                        {% else %} bg-blue-500 border border-blue-400 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    {% if request.endpoint != 'auth.login' and request.endpoint != 'auth.register' %}
+    <aside class="sidebar w-64 bg-dark-800 border-r border-white/5 hidden md:flex flex-col z-50">
+        <div class="h-20 flex items-center px-6 border-b border-white/5">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="CineOrça" class="h-20 w-auto object-contain">
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-1 mt-6 overflow-y-auto">
+            <a href="{{ url_for('dashboard.dashboard') }}" 
+               class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition {{ 'bg-neon-500/10 text-neon-500' if request.endpoint == 'dashboard.dashboard' else 'text-gray-400 hover:bg-dark-700 hover:text-white' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 shrink-0 transition {{ 'text-neon-500' if request.endpoint == 'dashboard.dashboard' else 'text-gray-500 group-hover:text-white' }}">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{{ url_for('budget.new_budget') }}" 
+               class="group flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition mt-6 mb-6 {{ 'bg-neon-500/20 text-neon-500 border border-neon-500/30' if request.endpoint == 'budget.new_budget' else 'bg-neon-500/10 text-neon-500 border border-neon-500/20 hover:bg-neon-500/20' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 shrink-0">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span>Novo Orçamento</span>
+            </a>
+            
+            <p class="px-4 text-xs font-bold text-gray-600 uppercase tracking-wider mt-8 mb-3">Cadastros</p>
+            
+            <a href="{{ url_for('operations.my_clients') }}" 
+               class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition {{ 'bg-neon-500/10 text-neon-500' if request.endpoint == 'operations.my_clients' else 'text-gray-400 hover:bg-dark-700 hover:text-white' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 shrink-0 transition {{ 'text-neon-500' if request.endpoint == 'operations.my_clients' else 'text-gray-500 group-hover:text-white' }}">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                </svg>
+                <span>Clientes</span>
+            </a>
+            
+            <a href="{{ url_for('operations.my_equipment') }}" 
+               class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition {{ 'bg-neon-500/10 text-neon-500' if request.endpoint == 'operations.my_equipment' else 'text-gray-400 hover:bg-dark-700 hover:text-white' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 shrink-0 transition {{ 'text-neon-500' if request.endpoint == 'operations.my_equipment' else 'text-gray-500 group-hover:text-white' }}">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span>Equipamentos</span>
+            </a>
+
+            <a href="{{ url_for('operations.freelancers') }}" 
+               class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition {{ 'bg-neon-500/10 text-neon-500' if request.endpoint == 'operations.freelancers' else 'text-gray-400 hover:bg-dark-700 hover:text-white' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 shrink-0 transition {{ 'text-neon-500' if request.endpoint == 'operations.freelancers' else 'text-gray-500 group-hover:text-white' }}">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.111 48.111 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.67.38m-4.5-8.006c-.915.087-1.854.149-2.808.149-1.46 0-2.896-.144-4.283-.417m0 0c-1.069.16-1.837 1.094-1.837 2.175v4.783c0 .68.315 1.297.82 1.708m0 0c.195-.165.42-.295.67-.38m14.13-1.413a48.117 48.117 0 01-3.413.387m-7.5 0a48.117 48.117 0 01-3.413-.387m0 0A2.186 2.186 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0a48.111 48.111 0 013.413.387m-7.5 0c-.954 0-1.893-.062-2.808-.149M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm-1.5 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                </svg>
+                <span>Freelas</span>
+            </a>
+            
+            <p class="px-4 text-xs font-bold text-gray-600 uppercase tracking-wider mt-8 mb-3">Conta</p>
+            
+            <a href="{{ url_for('dashboard.settings') }}" 
+               class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition {{ 'bg-neon-500/10 text-neon-500' if request.endpoint == 'dashboard.settings' else 'text-gray-400 hover:bg-dark-700 hover:text-white' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 shrink-0 transition {{ 'text-neon-500' if request.endpoint == 'dashboard.settings' else 'text-gray-500 group-hover:text-white' }}">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.33.183.705.247 1.07.184l1.302-.227c.532-.093 1.078.168 1.296.66l.895 2.225c.217.51.063 1.11-.357 1.44l-1.003.828c-.293.242-.435.635-.372 1.012" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Configurações</span>
+            </a>
+
+            <div class="pt-6 mt-6 border-t border-white/5 pb-6 px-4">
+                <form action="{{ url_for('auth.logout') }}" method="POST" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="group flex items-center gap-3 w-full text-left text-sm font-medium text-red-400 hover:text-red-300 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
+                        Sair da Conta
+                    </button>
+                </form>
+            </div>
+        </nav>
+    </aside>
+    {% endif %}
+
+    <main class="flex-1 overflow-y-auto relative h-full bg-dark-900">
+        
+        {% if request.endpoint != 'auth.login' and request.endpoint != 'auth.register' %}
+        <div class="mobile-header md:hidden p-4 flex justify-between items-center bg-dark-800 border-b border-white/5">
+             <img src="{{ url_for('static', filename='logo.png') }}" alt="CineOrça" class="h-8 w-auto object-contain">
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('dashboard.dashboard') }}" class="text-gray-400 hover:text-neon-500 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+                </a>
+                <a href="{{ url_for('budget.new_budget') }}" class="text-neon-500 hover:text-neon-400 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                </a>
+                <form action="{{ url_for('auth.logout') }}" method="POST" class="inline flex items-center">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-red-400 hover:text-red-300 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="p-4 md:p-8 max-w-7xl mx-auto">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

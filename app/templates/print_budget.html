@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Orçamento #{{ budget.id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: white; color: #1a1a1a; -webkit-print-color-adjust: exact; }
+        @page { size: A4; margin: 0; }
+        @media print { .no-print { display: none !important; } body { padding: 20mm; } }
+    </style>
+</head>
+<body class="p-10 max-w-[210mm] mx-auto bg-white" onload="window.print()">
+
+    <header class="flex justify-between border-b-2 border-gray-100 pb-8 mb-8">
+        <div>
+            {% if config.logo_url %}
+            <img src="{{ config.logo_url }}" class="h-16 mb-4 object-contain" alt="Logo">
+            {% else %}
+            <h1 class="text-3xl font-black uppercase tracking-tighter">{{ config.company_name or 'SUA EMPRESA' }}</h1>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-2">{{ config.address or '' }}<br>{{ config.cnpj or '' }}<br>{{ config.whatsapp or '' }}</p>
+        </div>
+        <div class="text-right">
+            <span class="inline-block bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">Orçamento</span>
+            <p class="text-4xl font-black">#{{ budget.id }}</p>
+            <p class="text-sm text-gray-500 mt-1">Data: {{ budget.date.strftime('%d/%m/%Y') }}</p>
+            <p class="text-sm font-bold mt-1">Validade: 15 dias</p>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-2 gap-12 mb-12 bg-gray-50 p-6 rounded-xl border border-gray-100">
+        <div>
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Cliente</h3>
+            <p class="font-bold text-lg">{{ budget.client }}</p>
+            <p class="text-sm text-gray-600">{{ budget.client_cnpj or '' }}</p>
+            <p class="text-sm text-gray-600">{{ budget.client_phone or '' }}</p>
+        </div>
+        <div>
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Projeto</h3>
+            <p class="font-bold text-lg">{{ budget.title }}</p>
+            <p class="text-sm text-gray-600 mt-1">{{ budget.description }}</p>
+        </div>
+    </div>
+
+    <table class="w-full mb-12 text-sm text-left">
+        <thead class="uppercase bg-gray-100 font-bold text-gray-600">
+            <tr>
+                <th class="p-3 pl-4">Item</th>
+                <th class="p-3 text-center">Qtd/Dias</th>
+                <th class="p-3 text-right">Unit.</th>
+                <th class="p-3 text-right pr-4">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if budget.labor_days > 0 %}
+            {% set labor_total = budget.labor_days * (config.hourly_rate * 8) %}
+            <tr class="border-b border-gray-100">
+                <td class="p-3 pl-4 font-medium">Serviços / Mão de Obra</td>
+                <td class="p-3 text-center">{{ budget.labor_days }}</td>
+                <td class="p-3 text-right">-</td>
+                <td class="p-3 text-right font-bold pr-4">R$ {{ "%.2f"|format(labor_total)|replace('.', ',') }}</td>
+            </tr>
+            {% endif %}
+
+            {% for item in budget.items %}
+            <tr class="border-b border-gray-100">
+                <td class="p-3 pl-4 font-medium">
+                    {{ item.name }} 
+                    <span class="text-xs text-gray-400">({{ item.item_type }})</span>
+                </td>
+                <td class="p-3 text-center">{{ item.days }}</td>
+                <td class="p-3 text-right">R$ {{ "%.2f"|format(item.value)|replace('.', ',') }}</td>
+                <td class="p-3 text-right font-bold pr-4">R$ {{ "%.2f"|format(item.value * item.days)|replace('.', ',') }}</td>
+            </tr>
+            {% endfor %}
+
+            {% if budget.extra_cost > 0 %}
+            <tr class="border-b border-gray-100">
+                <td class="p-3 pl-4 text-gray-500">Custos Extras / Logística</td>
+                <td class="p-3 text-center">1</td>
+                <td class="p-3 text-right">R$ {{ "%.2f"|format(budget.extra_cost)|replace('.', ',') }}</td>
+                <td class="p-3 text-right font-bold pr-4">R$ {{ "%.2f"|format(budget.extra_cost)|replace('.', ',') }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="flex justify-end mb-16">
+        <div class="w-1/2 bg-gray-50 p-6 rounded-xl border border-gray-100">
+            <div class="flex justify-between py-2 border-b border-gray-200 text-sm">
+                <span class="text-gray-500">Subtotal (Custo)</span>
+                <span class="font-bold">R$ {{ "%.2f"|format(budget.total_cost)|replace('.', ',') }}</span>
+            </div>
+
+            {% if budget.tax_percent > 0 %}
+            <div class="flex justify-between py-2 border-b border-gray-200 text-sm">
+                <span class="text-gray-500">Impostos / Margem</span>
+                <span class="font-bold">R$ {{ "%.2f"|format(budget.final_price - budget.total_cost)|replace('.', ',') }}</span>
+            </div>
+            {% endif %}
+
+            <div class="flex justify-between pt-4 mt-2 items-center">
+                <span class="font-black uppercase text-lg">Total Final</span>
+                <span class="font-black text-3xl text-gray-900">R$ {{ "%.2f"|format(budget.final_price)|replace('.', ',') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-xs text-gray-400 text-center border-t pt-8">
+        <p>Proposta válida por 15 dias. Gerado por {{ config.company_name or 'CineOrca' }}.</p>
+    </div>
+</body>
+</html>

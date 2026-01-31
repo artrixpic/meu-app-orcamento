@@ -1,5 +1,17 @@
-flask
-flask-sqlalchemy
-flask_sqlalchemy
-flask-login
-werkzeug
+Flask==3.0.0
+Fla==3.1.1
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+Flask-WTF==1.2.1
+Flask-Limiter==3.5.0
+email-validator==2.1.0.post1
+# Banco de Dados (Postgres)
+psycopg2-binary==2.9.9
+# Servidor de Aplicação (Produção)
+gunicorn==21.2.0
+# Redis (Para o Rate Limiter e Cache)
+redis==5.0.1
+# Variáveis de ambiente
+python-dotenv==1.0.0
+# Migrations
+alembic==1.13.1

@@ -2,8 +2,9 @@
 {% block content %}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
     <div class="glass p-6 rounded-2xl border border-dark-700 h-fit">
-        <h2 class="text-xl font-bold text-white mb-4">👥 Novo Cliente</h2>
-        <form method="POST" class="space-y-4">
+        <h2 class="text-xl font-bold text-white mb-4"> Novo Cliente</h2>
+        <form action="{{ url_for('operations.my_clients') }}" method="POST" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="block text-gray-400 text-sm mb-1">Nome / Empresa</label>
                 <input type="text" name="name" required placeholder="Ex: Padaria do João" class="w-full bg-dark-900 border border-dark-700 rounded-lg p-3 text-white">
@@ -32,13 +33,29 @@
     <div class="space-y-4">
         <h2 class="text-xl font-bold text-white mb-4">Meus Clientes</h2>
         {% for client in clients %}
-        <div class="glass p-4 rounded-xl border border-dark-700 flex justify-between items-center group">
-            <div>
-                <h3 class="font-bold text-white">{{ client.name }}</h3>
+        <div class="glass p-4 rounded-xl border border-dark-700 flex justify-between items-center group relative overflow-hidden">
+            {% if not client.active %}
+            <div class="absolute inset-y-0 left-0 w-1 bg-red-500"></div>
+            {% endif %}
+
+            <div class="{% if not client.active %}opacity-50{% endif %} pl-2">
+                <h3 class="font-bold text-white flex items-center gap-2">
+                    {{ client.name }}
+                    {% if not client.active %}<span class="text-[10px] bg-red-500/20 text-red-500 px-1 rounded uppercase">Inativo</span>{% endif %}
+                </h3>
                 <p class="text-xs text-gray-500">{{ client.phone }}</p>
                 <p class="text-xs text-gray-600 mt-1">{{ client.address }}</p>
             </div>
-            <a href="{{ url_for('delete_client', id=client.id) }}" class="text-red-500 hover:bg-red-500/20 p-2 rounded transition opacity-50 group-hover:opacity-100">🗑️</a>
+            <div class="flex gap-2">
+                <a href="{{ url_for('operations.edit_client', id=client.id) }}" class="bg-dark-800 hover:bg-dark-700 p-2 rounded text-gray-300 text-sm transition">✏️</a>
+
+                <form action="{{ url_for('operations.delete_client', id=client.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este cliente?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-red-500 hover:bg-red-500/20 p-2 rounded transition opacity-50 group-hover:opacity-100">
+                        🗑️
+                    </button>
+                </form>
+            </div>
         </div>
         {% else %}
         <p class="text-gray-500 text-sm italic">Nenhum cliente cadastrado ainda.</p>

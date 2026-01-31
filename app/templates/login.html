@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center">
+    <div class="glass p-8 rounded-2xl border border-white/10 w-full max-w-md">
+        <h2 class="text-2xl font-bold text-white mb-6 text-center">Login</h2>
+        
+        <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div>
+                <label class="text-gray-400 text-sm">Email</label>
+                <input type="email" name="email" required class="w-full bg-dark-800 border border-dark-600 rounded p-3 text-white focus:border-neon-500 outline-none">
+            </div>
+            
+            <div>
+                <label class="text-gray-400 text-sm">Senha</label>
+                <input type="password" name="password" required class="w-full bg-dark-800 border border-dark-600 rounded p-3 text-white focus:border-neon-500 outline-none">
+            </div>
+
+            <button type="submit" class="w-full bg-neon-500 hover:bg-neon-400 text-dark-900 font-bold py-3 rounded transition">
+                Entrar
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-gray-400 text-sm">
+            Ainda não tem conta? <a href="{{ url_for('auth.register') }}" class="text-neon-500 hover:underline">Cadastre-se grátis</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

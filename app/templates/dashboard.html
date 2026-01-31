@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8 pb-20">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h2 class="text-3xl font-bold text-white">Dashboard 📊</h2>
+            <p class="text-gray-400">Visão geral do mês {{ month }}</p>
+        </div>
+        <form method="GET" class="glass p-2 rounded-xl flex items-center gap-2">
+            <label class="text-gray-400 text-sm ml-2">Mês:</label>
+            <select name="month" onchange="this.form.submit()" class="bg-dark-900 text-white border border-dark-700 rounded-lg p-2 text-sm">
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if month==m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass p-6 rounded-2xl border border-neon-500/30 relative overflow-hidden">
+            <h3 class="text-gray-400 text-sm font-medium mb-2">Faturamento Aprovado</h3>
+            <p class="text-4xl font-bold text-white">R$ {{ total_approved | format_currency }}</p>
+            <div class="mt-4">
+                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Meta: R$ {{ config.monthly_goal | format_currency }}</span>
+                    <span>{{ goal_percent }}%</span>
+                </div>
+                <div class="w-full bg-dark-800 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-neon-500 to-blue-500 h-2 rounded-full" style="width: {{ goal_percent if goal_percent < 100 else 100 }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border border-yellow-500/30">
+            <h3 class="text-gray-400 text-sm font-medium mb-2">Em Negociação</h3>
+            <p class="text-4xl font-bold text-yellow-400">R$ {{ total_pending | format_currency }}</p>
+            <p class="text-xs text-gray-500 mt-2">Potencial de venda</p>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border border-red-500/30">
+            <h3 class="text-gray-400 text-sm font-medium mb-2">Orçamentos Perdidos</h3>
+            <p class="text-4xl font-bold text-red-500">R$ {{ total_lost | format_currency }}</p>
+            <p class="text-xs text-gray-500 mt-2">Dinheiro deixado na mesa</p>
+        </div>
+    </div>
+
+    <div class="glass rounded-2xl border border-dark-700 overflow-hidden">
+        <div class="p-6 border-b border-dark-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white">Últimos Orçamentos</h3>
+            <a href="{{ url_for('budget.new_budget') }}" class="text-sm bg-neon-500 text-dark-900 font-bold px-4 py-2 rounded-lg hover:bg-neon-600 transition">+ Novo</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-dark-800 text-gray-400 text-xs uppercase tracking-wider">
+                    <tr>
+                        <th class="p-4 pl-6">Cliente / Job</th>
+                        <th class="p-4">Valor</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4 pr-6 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-dark-700 text-gray-300">
+                    {% for budget in budgets %}
+                    <tr class="hover:bg-dark-800/50 group transition">
+                        <td class="p-4 pl-6">
+                            <div class="font-bold text-white">{{ budget.client }}</div>
+                            <div class="text-xs text-gray-500">{{ budget.title }}</div>
+                        </td>
+                        <td class="p-4 font-mono text-white">R$ {{ budget.final_price | format_currency }}</td>
+                        <td class="p-4">
+                            {% if budget.status == 'Aprovado' %}
+                                <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/30 uppercase">APROVADO</span>
+                            {% elif budget.status == 'Perdido' %}
+                                <span class="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs border border-red-500/20 uppercase font-bold">PERDIDO</span>
+                            {% else %}
+                                <span class="bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded text-xs border border-yellow-500/20 uppercase font-bold">PENDENTE</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 pr-6 flex justify-end gap-2 items-center">
+                            {% if budget.status == 'Pendente' %}
+                                <form action="{{ url_for('budget.change_status', id=budget.id, new_status='Aprovado') }}" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="bg-green-500/10 hover:bg-green-500/20 text-green-500 p-2 rounded transition" title="Aprovar">✅</button>
+                                </form>
+
+                                <form action="{{ url_for('budget.change_status', id=budget.id, new_status='Perdido') }}" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 p-2 rounded transition" title="Reprovar">❌</button>
+                                </form>
+                            {% endif %}
+
+                            <a href="{{ url_for('budget.edit_budget', id=budget.id) }}" class="bg-dark-700 hover:bg-dark-600 px-3 py-1.5 rounded-lg text-sm text-white transition border border-white/5 flex items-center gap-1">
+                                ✏️ Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="p-8 text-center text-gray-500 italic">Nenhum orçamento encontrado para este mês.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if pagination and pagination.pages > 1 %}
+    <div class="flex justify-between items-center mt-6 pt-4 border-t border-white/5 no-print">
+        <div class="text-xs text-gray-500">
+            Página <span class="text-white font-bold">{{ pagination.page }}</span> de {{ pagination.pages }}
+        </div>
+
+        <div class="flex gap-2">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('dashboard.dashboard', page=pagination.prev_num, month=month) }}" class="px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white text-xs font-bold rounded-lg border border-white/5 transition">
+                &larr; Anterior
+            </a>
+            {% else %}
+            <span class="px-4 py-2 bg-dark-900 text-gray-600 text-xs font-bold rounded-lg border border-white/5 cursor-not-allowed opacity-50">
+                &larr; Anterior
+            </span>
+            {% endif %}
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('dashboard.dashboard', page=pagination.next_num, month=month) }}" class="px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white text-xs font-bold rounded-lg border border-white/5 transition">
+                Próximo &rarr;
+            </a>
+            {% else %}
+            <span class="px-4 py-2 bg-dark-900 text-gray-600 text-xs font-bold rounded-lg border border-white/5 cursor-not-allowed opacity-50">
+                Próximo &rarr;
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
