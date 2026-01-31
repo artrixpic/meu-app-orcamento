@@ -1,393 +1,390 @@
-{% extends "base.html" %}
+    {% extends "base.html" %}
 
-{% block content %}
-<div class="max-w-7xl mx-auto pb-32">
-    <form id="budgetForm" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
-        <input type="hidden" name="items_json" id="items_json_input">
-        <input type="hidden" name="final_price_input" id="final_price_input">
-        <input type="hidden" name="total_cost_input" id="total_cost_input">
-        <input type="hidden" name="extra_cost_input" id="extra_cost_input" value="{{ budget.extra_cost if budget else 0 }}">
-        
-        <div class="lg:col-span-2 space-y-6">
-            
-            <div class="glass p-6 rounded-2xl border border-white/5">
-                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <span class="text-neon-500">01.</span> Cliente
-                </h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="relative">
-                        <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">SELECIONAR CLIENTE</label>
-                        <select id="clientSelect" name="client" onchange="fillClientData()" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-white focus:border-neon-500 outline-none appearance-none transition">
-                            <option value="">-- Novo ou Selecione --</option>
-                            {% for client in clients %}
-                            <option value="{{ client.name }}" 
-                                    data-cnpj="{{ client.cnpj }}" 
-                                    data-phone="{{ client.phone }}" 
-                                    data-address="{{ client.address }}"
-                                    {% if budget and budget.client == client.name %}selected{% endif %}>
-                                {{ client.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+    {% block content %}
+    <div class="max-w-7xl mx-auto pb-32">
+        <form id="budgetForm" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <input type="hidden" name="items_json" id="items_json_input">
+            <input type="hidden" name="final_price_input" id="final_price_input">
+            <input type="hidden" name="total_cost_input" id="total_cost_input">
+            <input type="hidden" name="extra_cost_input" id="extra_cost_input" value="{{ budget.extra_cost if budget else 0 }}">
+
+            <div class="lg:col-span-2 space-y-6">
+
+                <div class="glass p-6 rounded-2xl border border-white/5">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="text-neon-500">01.</span> Cliente
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">SELECIONAR CLIENTE</label>
+                            <select id="clientSelect" name="client" onchange="fillClientData()" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-white focus:border-neon-500 outline-none appearance-none transition">
+                                <option value="">-- Novo ou Selecione --</option>
+                                {% for client in clients %}
+                                <option value="{{ client.name }}" 
+                                        data-cnpj="{{ client.cnpj }}" 
+                                        data-phone="{{ client.phone }}" 
+                                        data-address="{{ client.address }}"
+                                        {% if budget and budget.client == client.name %}selected{% endif %}>
+                                    {{ client.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">NOME DO PROJETO</label>
+                            <input type="text" name="title" value="{{ budget.title if budget else '' }}" required class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-white focus:border-neon-500 outline-none transition">
+                        </div>
                     </div>
-                    
-                    <div>
-                        <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">NOME DO PROJETO</label>
-                        <input type="text" name="title" value="{{ budget.title if budget else '' }}" required class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-white focus:border-neon-500 outline-none transition">
+
+                    <div id="clientDetails" class="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" name="client_cnpj" id="client_cnpj" placeholder="CNPJ/CPF" value="{{ budget.client_cnpj if budget else '' }}" class="bg-dark-900/50 border border-dark-700 rounded-lg p-2 text-sm text-gray-300">
+                        <input type="text" name="client_phone" id="client_phone" placeholder="Telefone" value="{{ budget.client_phone if budget else '' }}" class="bg-dark-900/50 border border-dark-700 rounded-lg p-2 text-sm text-gray-300">
+                        <div class="flex gap-2">
+                            <input type="text" name="client_address" id="client_address" placeholder="Endereço" value="{{ budget.client_address if budget else '' }}" class="bg-dark-900/50 border border-dark-700 rounded-lg p-2 text-sm text-gray-300 w-full">
+                            <button type="button" onclick="quickSaveClient()" class="bg-neon-500/20 text-neon-500 hover:bg-neon-500 hover:text-dark-900 p-2 rounded-lg transition" title="Salvar cadastro">
+                                💾
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">DESCRIÇÃO (Briefing)</label>
+                        <textarea name="description" rows="3" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-white focus:border-neon-500 outline-none transition">{{ budget.description if budget else '' }}</textarea>
                     </div>
                 </div>
 
-                <div id="clientDetails" class="mt-4 pt-4 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" name="client_cnpj" id="client_cnpj" placeholder="CNPJ/CPF" value="{{ budget.client_cnpj if budget else '' }}" class="bg-dark-900/50 border border-dark-700 rounded-lg p-2 text-sm text-gray-300">
-                    <input type="text" name="client_phone" id="client_phone" placeholder="Telefone" value="{{ budget.client_phone if budget else '' }}" class="bg-dark-900/50 border border-dark-700 rounded-lg p-2 text-sm text-gray-300">
-                    <div class="flex gap-2">
-                        <input type="text" name="client_address" id="client_address" placeholder="Endereço" value="{{ budget.client_address if budget else '' }}" class="bg-dark-900/50 border border-dark-700 rounded-lg p-2 text-sm text-gray-300 w-full">
-                        <button type="button" onclick="quickSaveClient()" class="bg-neon-500/20 text-neon-500 hover:bg-neon-500 hover:text-dark-900 p-2 rounded-lg transition" title="Salvar cadastro">
-                            💾
+                <div class="glass p-6 rounded-2xl border border-white/5">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="text-neon-500">02.</span> Recursos
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">ADICIONAR EQUIPAMENTO</label>
+                            <select id="gearSelect" onchange="addItemFromSelect('gear')" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-gray-300 hover:text-white cursor-pointer transition">
+                                <option value="">Escolher...</option>
+                                {% for gear in gears %}
+                                <option value="{{ gear.name }}" data-price="{{ gear.rental_value }}">{{ gear.name }} - R$ {{ gear.rental_value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">ADICIONAR FREELANCER</label>
+                            <select id="freelaSelect" onchange="addItemFromSelect('freela')" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-gray-300 hover:text-white cursor-pointer transition">
+                                <option value="">Escolher...</option>
+                                {% for freela in freelas %}
+                                <option value="{{ freela.name }}" data-price="{{ freela.daily_rate }}" data-role="{{ freela.role }}">{{ freela.name }} ({{ freela.role }}) - R$ {{ freela.daily_rate }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark-900/50 rounded-xl border border-white/5 overflow-hidden">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-white/5 text-gray-400 font-bold uppercase text-xs">
+                                <tr>
+                                    <th class="p-3">Item</th>
+                                    <th class="p-3 w-24 text-center">Dias</th>
+                                    <th class="p-3 text-right">Valor Unit.</th>
+                                    <th class="p-3 text-right">Total</th>
+                                    <th class="p-3 w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTableBody" class="divide-y divide-white/5">
+                                </tbody>
+                        </table>
+                        <div id="emptyState" class="p-8 text-center text-gray-500 text-sm">
+                            Nenhum item adicionado ainda.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <div class="sticky top-6 space-y-4">
+
+                    <div class="glass p-6 rounded-2xl border border-neon-500/30 shadow-[0_0_30px_-10px_rgba(0,255,163,0.1)]">
+                        <h3 class="text-lg font-bold text-white mb-6">Resumo Financeiro</h3>
+
+                        <div class="mb-6">
+                            <div class="flex justify-between mb-2">
+                                <label class="text-sm text-gray-400">Dias de Edição/Trabalho</label>
+                                <span class="text-white font-bold" id="labor_days_display">0</span>
+                            </div>
+                            <input type="range" name="labor_days" id="labor_days" min="0" max="30" step="0.5" value="{{ budget.labor_days if budget else 1 }}" 
+                                   class="w-full h-2 bg-dark-700 rounded-lg appearance-none cursor-pointer accent-neon-500" oninput="calculateTotal()">
+                        </div>
+
+                        <div class="mb-6">
+                            <div class="flex justify-between mb-2">
+                                <label class="text-sm text-gray-400">Margem de Lucro</label>
+                                <span class="text-neon-400 font-bold" id="margin_display">30%</span>
+                            </div>
+                            <input type="range" name="margin_range" id="margin_range" min="0" max="100" value="{{ budget.margin_percent if budget else 30 }}" 
+                                   class="w-full h-2 bg-dark-700 rounded-lg appearance-none cursor-pointer accent-neon-500" oninput="calculateTotal()">
+                        </div>
+
+                        <div class="mb-6">
+                            <div class="flex justify-between mb-2">
+                                <label class="text-sm text-gray-400">Imposto (NF)</label>
+                                <span class="text-white font-bold"><span id="tax_display">6</span>%</span>
+                            </div>
+                            <input type="number" name="tax_percent" id="tax_input" value="{{ budget.tax_percent if budget else 6 }}" 
+                                   class="w-full bg-dark-800 border border-dark-600 rounded p-2 text-white text-right outline-none focus:border-neon-500" oninput="calculateTotal()">
+                        </div>
+
+                        <div class="mb-6 pt-4 border-t border-white/10">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-sm text-gray-400">Custos Extras</label>
+                                <input type="number" id="extra_cost_visual" value="{{ budget.extra_cost if budget else 0 }}" 
+                                       class="w-24 bg-transparent text-right text-gray-400 border-b border-gray-600 focus:border-neon-500 outline-none" 
+                                       oninput="calculateTotal()">
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/10 pt-6 mt-6">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-gray-400 text-sm">Preço Final</span>
+                                <span class="text-3xl font-black text-white" id="finalPrice">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Custo Total: <span id="totalCost">R$ 0,00</span></span>
+                                <span>Lucro Líquido: <span id="netProfit" class="text-neon-500">R$ 0,00</span></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full mt-6 bg-neon-500 hover:bg-neon-400 text-dark-900 font-black py-4 rounded-xl shadow-lg shadow-neon-500/20 transition transform hover:scale-[1.02]">
+                            SALVAR ORÇAMENTO
                         </button>
                     </div>
                 </div>
-
-                <div class="mt-4">
-                    <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">DESCRIÇÃO (Briefing)</label>
-                    <textarea name="description" rows="3" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-white focus:border-neon-500 outline-none transition">{{ budget.description if budget else '' }}</textarea>
-                </div>
             </div>
+        </form>
+    </div>
 
-            <div class="glass p-6 rounded-2xl border border-white/5">
-                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <span class="text-neon-500">02.</span> Recursos
-                </h3>
+    <script>
+        let items = [];
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">ADICIONAR EQUIPAMENTO</label>
-                        <select id="gearSelect" onchange="addItemFromSelect('gear')" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-gray-300 hover:text-white cursor-pointer transition">
-                            <option value="">Escolher...</option>
-                            {% for gear in gears %}
-                            <option value="{{ gear.name }}" data-price="{{ gear.rental_value }}">{{ gear.name }} - R$ {{ gear.rental_value }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 font-bold ml-1 mb-1 block">ADICIONAR FREELANCER</label>
-                        <select id="freelaSelect" onchange="addItemFromSelect('freela')" class="w-full bg-dark-800 border border-dark-600 rounded-lg p-3 text-gray-300 hover:text-white cursor-pointer transition">
-                            <option value="">Escolher...</option>
-                            {% for freela in freelas %}
-                            <option value="{{ freela.name }}" data-price="{{ freela.daily_rate }}" data-role="{{ freela.role }}">{{ freela.name }} ({{ freela.role }}) - R$ {{ freela.daily_rate }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
+        // 1. Carga segura dos dados do Jinja2
+        const serverItems = {{ items_data | tojson }};
 
-                <div class="bg-dark-900/50 rounded-xl border border-white/5 overflow-hidden">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-white/5 text-gray-400 font-bold uppercase text-xs">
-                            <tr>
-                                <th class="p-3">Item</th>
-                                <th class="p-3 w-24 text-center">Dias</th>
-                                <th class="p-3 text-right">Valor Unit.</th>
-                                <th class="p-3 text-right">Total</th>
-                                <th class="p-3 w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="itemsTableBody" class="divide-y divide-white/5">
-                            </tbody>
-                    </table>
-                    <div id="emptyState" class="p-8 text-center text-gray-500 text-sm">
-                        Nenhum item adicionado ainda.
-                    </div>
-                </div>
-            </div>
-        </div>
+        // Carrega os itens se existirem e forem válidos
+        if (serverItems && Array.isArray(serverItems) && serverItems.length > 0) {
+            items = serverItems.map(item => ({
+                name: item.name || 'Item sem nome',
+                value: parseFloat(item.value) || 0,
+                days: parseFloat(item.days) || 1,
+                type: item.type || 'Outro'
+            }));
+        }
 
-        <div class="lg:col-span-1">
-            <div class="sticky top-6 space-y-4">
-                
-                <div class="glass p-6 rounded-2xl border border-neon-500/30 shadow-[0_0_30px_-10px_rgba(0,255,163,0.1)]">
-                    <h3 class="text-lg font-bold text-white mb-6">Resumo Financeiro</h3>
+        function addItemFromSelect(type) {
+            const select = document.getElementById(type + 'Select');
+            const option = select.options[select.selectedIndex];
 
-                    <div class="mb-6">
-                        <div class="flex justify-between mb-2">
-                            <label class="text-sm text-gray-400">Dias de Edição/Trabalho</label>
-                            <span class="text-white font-bold" id="labor_days_display">0</span>
-                        </div>
-                        <input type="range" name="labor_days" id="labor_days" min="0" max="30" step="0.5" value="{{ budget.labor_days if budget else 1 }}" 
-                               class="w-full h-2 bg-dark-700 rounded-lg appearance-none cursor-pointer accent-neon-500" oninput="calculateTotal()">
-                    </div>
+            if (!option.value) return;
 
-                    <div class="mb-6">
-                        <div class="flex justify-between mb-2">
-                            <label class="text-sm text-gray-400">Margem de Lucro</label>
-                            <span class="text-neon-400 font-bold" id="margin_display">30%</span>
-                        </div>
-                        <input type="range" name="margin_range" id="margin_range" min="0" max="100" value="{{ budget.margin_percent if budget else 30 }}" 
-                               class="w-full h-2 bg-dark-700 rounded-lg appearance-none cursor-pointer accent-neon-500" oninput="calculateTotal()">
-                    </div>
-
-                    <div class="mb-6">
-                        <div class="flex justify-between mb-2">
-                            <label class="text-sm text-gray-400">Imposto (NF)</label>
-                            <span class="text-white font-bold"><span id="tax_display">6</span>%</span>
-                        </div>
-                        <input type="number" name="tax_percent" id="tax_input" value="{{ budget.tax_percent if budget else 6 }}" 
-                               class="w-full bg-dark-800 border border-dark-600 rounded p-2 text-white text-right outline-none focus:border-neon-500" oninput="calculateTotal()">
-                    </div>
-
-                    <div class="mb-6 pt-4 border-t border-white/10">
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm text-gray-400">Custos Extras</label>
-                            <input type="number" id="extra_cost_visual" value="{{ budget.extra_cost if budget else 0 }}" 
-                                   class="w-24 bg-transparent text-right text-gray-400 border-b border-gray-600 focus:border-neon-500 outline-none" 
-                                   oninput="calculateTotal()">
-                        </div>
-                    </div>
-
-                    <div class="border-t border-white/10 pt-6 mt-6">
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="text-gray-400 text-sm">Preço Final</span>
-                            <span class="text-3xl font-black text-white" id="finalPrice">R$ 0,00</span>
-                        </div>
-                        <div class="flex justify-between text-xs text-gray-500">
-                            <span>Custo Total: <span id="totalCost">R$ 0,00</span></span>
-                            <span>Lucro Líquido: <span id="netProfit" class="text-neon-500">R$ 0,00</span></span>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full mt-6 bg-neon-500 hover:bg-neon-400 text-dark-900 font-black py-4 rounded-xl shadow-lg shadow-neon-500/20 transition transform hover:scale-[1.02]">
-                        SALVAR ORÇAMENTO
-                    </button>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<script>
-    let items = [];
-
-    // 1. Carga segura dos dados do Jinja2
-    const serverItems = {{ items_data | tojson }};
-
-    // Carrega os itens se existirem e forem válidos
-    if (serverItems && Array.isArray(serverItems) && serverItems.length > 0) {
-        items = serverItems.map(item => ({
-            name: item.name || 'Item sem nome',
-            value: parseFloat(item.value) || 0,
-            days: parseFloat(item.days) || 1,
-            type: item.type || 'Outro'
-        }));
-    }
-
-    function addItemFromSelect(type) {
-        const select = document.getElementById(type + 'Select');
-        const option = select.options[select.selectedIndex];
-
-        if (!option.value) return;
-
-        items.push({
-            name: option.value,
-            type: type,
-            value: parseFloat(option.dataset.price),
-            days: 1
-        });
-
-        select.value = "";
-        renderItems();
-        calculateTotal();
-    }
-
-    function removeItem(index) {
-        items.splice(index, 1);
-        renderItems();
-        calculateTotal();
-    }
-
-    function updateItemDays(index, days) {
-        items[index].days = parseFloat(days) || 1;
-        calculateTotal();
-        // Atualiza o total visualmente na linha sem recriar a tabela toda (opcional, mas bom pra UX)
-        renderItems(); 
-    }
-
-    // --- CORREÇÃO DE SEGURANÇA (XSS) ---
-    // Substituimos innerHTML por manipulação direta do DOM
-    function renderItems() {
-        const tbody = document.getElementById('itemsTableBody');
-        const empty = document.getElementById('emptyState');
-
-        tbody.innerHTML = ''; // Limpa a tabela
-
-        if (items.length === 0) {
-            empty.style.display = 'block';
-        } else {
-            empty.style.display = 'none';
-
-            items.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                const total = item.value * item.days;
-
-                // 1. Célula Nome (Blindada contra XSS com textContent)
-                const tdName = document.createElement('td');
-                tdName.className = "p-3 text-white font-medium";
-                tdName.textContent = item.name; // <--- O NAVEGADOR ESCAPA O TEXTO AQUI
-                tr.appendChild(tdName);
-
-                // 2. Célula Dias (Input)
-                const tdDays = document.createElement('td');
-                tdDays.className = "p-3 text-center";
-
-                const inputDays = document.createElement('input');
-                inputDays.type = "number";
-                inputDays.value = item.days;
-                inputDays.min = "0.5";
-                inputDays.step = "0.5";
-                inputDays.className = "w-12 bg-dark-800 border border-dark-600 rounded p-1 text-center text-white text-xs";
-                inputDays.oninput = function() { updateItemDays(index, this.value); };
-
-                tdDays.appendChild(inputDays);
-                tr.appendChild(tdDays);
-
-                // 3. Célula Valor Unitário
-                const tdValue = document.createElement('td');
-                tdValue.className = "p-3 text-right text-gray-400";
-                tdValue.textContent = item.value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-                tr.appendChild(tdValue);
-
-                // 4. Célula Total
-                const tdTotal = document.createElement('td');
-                tdTotal.className = "p-3 text-right text-white font-bold";
-                tdTotal.textContent = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-                tr.appendChild(tdTotal);
-
-                // 5. Célula Botão Remover
-                const tdAction = document.createElement('td');
-                tdAction.className = "p-3 text-right";
-
-                const btnRemove = document.createElement('button');
-                btnRemove.type = "button";
-                btnRemove.textContent = "×";
-                btnRemove.className = "text-red-500 hover:text-red-400 text-xl font-bold";
-                btnRemove.onclick = function() { removeItem(index); };
-
-                tdAction.appendChild(btnRemove);
-                tr.appendChild(tdAction);
-
-                // Adiciona linha à tabela
-                tbody.appendChild(tr);
+            items.push({
+                name: option.value,
+                type: type,
+                value: parseFloat(option.dataset.price),
+                days: 1
             });
+
+            select.value = "";
+            renderItems();
+            calculateTotal();
         }
 
-        document.getElementById('items_json_input').value = JSON.stringify(items);
-    }
-
-    function calculateTotal() {
-        const laborDays = parseFloat(document.getElementById('labor_days').value);
-        const margin = parseInt(document.getElementById('margin_range').value);
-        const tax = parseFloat(document.getElementById('tax_input').value) || 0;
-        const extra = parseFloat(document.getElementById('extra_cost_visual').value) || 0;
-
-        document.getElementById('labor_days_display').innerText = laborDays;
-        document.getElementById('margin_display').innerText = margin + '%';
-        document.getElementById('tax_display').innerText = tax;
-
-        // Se config não existir, fallback para 0
-        const hourlyRate = {{ config.hourly_rate if config and config.hourly_rate else 0 }};
-        const dailyRate = hourlyRate * 8;
-        const laborCost = laborDays * dailyRate;
-
-        let itemsCost = 0;
-        items.forEach(i => itemsCost += (i.value * i.days));
-
-        const totalCost = laborCost + itemsCost + extra;
-
-        const markup = (margin + tax) / 100;
-        let finalPrice = totalCost;
-        if (1 - markup > 0) {
-            finalPrice = totalCost / (1 - markup);
+        function removeItem(index) {
+            items.splice(index, 1);
+            renderItems();
+            calculateTotal();
         }
 
-        const profit = finalPrice - totalCost;
-
-        document.getElementById('finalPrice').innerText = finalPrice.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-        document.getElementById('totalCost').innerText = totalCost.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-        document.getElementById('netProfit').innerText = profit.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-
-        document.getElementById('items_json_input').value = JSON.stringify(items);
-        document.getElementById('extra_cost_input').value = extra;
-    }
-
-    function fillClientData() {
-        const select = document.getElementById('clientSelect');
-        const option = select.options[select.selectedIndex];
-
-        if (option.value) {
-            document.getElementById('client_cnpj').value = option.dataset.cnpj;
-            document.getElementById('client_phone').value = option.dataset.phone;
-            document.getElementById('client_address').value = option.dataset.address;
-        }
-    }
-
-    function quickSaveClient() {
-        const nameSelect = document.getElementById('clientSelect');
-        const name = nameSelect.options[nameSelect.selectedIndex].text;
-        const cnpj = document.getElementById('client_cnpj').value;
-        const phone = document.getElementById('client_phone').value;
-        const address = document.getElementById('client_address').value;
-        
-        // CSRF Token
-        const csrfInput = document.querySelector('input[name="csrf_token"]');
-        const csrfToken = csrfInput ? csrfInput.value : '';
-
-        if (!name || name === "-- Novo ou Selecione --") {
-            alert("Por favor, selecione ou digite um nome válido.");
-            return;
+        function updateItemDays(index, days) {
+            items[index].days = parseFloat(days) || 1;
+            calculateTotal();
+            renderItems(); 
         }
 
-        fetch('/api/quick_save_client', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ name, cnpj, address, phone })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if(data.success) {
-                alert("Cliente salvo!");
-                
-                // --- ATUALIZAÇÃO DE UX ---
-                // Verifica se a opção já existe, se não, cria
-                let optionExists = false;
-                for (let i = 0; i < nameSelect.options.length; i++) {
-                    if (nameSelect.options[i].text === data.name) {
-                        optionExists = true;
-                        nameSelect.selectedIndex = i;
-                        break;
-                    }
-                }
+        // --- CORREÇÃO DE SEGURANÇA (XSS) ---
+        function renderItems() {
+            const tbody = document.getElementById('itemsTableBody');
+            const empty = document.getElementById('emptyState');
 
-                if (!optionExists) {
-                    // Cria nova opção e seleciona
-                    const newOption = new Option(data.name, data.name);
-                    newOption.selected = true;
-                    
-                    // Adiciona metadados para preenchimento automático futuro
-                    newOption.dataset.cnpj = cnpj;
-                    newOption.dataset.phone = phone;
-                    newOption.dataset.address = address;
-                    
-                    nameSelect.add(newOption);
-                    // Remove a seleção do anterior e foca no novo
-                    nameSelect.value = data.name;
-                }
+            tbody.innerHTML = ''; // Limpa a tabela
+
+            if (items.length === 0) {
+                empty.style.display = 'block';
             } else {
-                alert("Erro: " + (data.error || "Erro desconhecido"));
+                empty.style.display = 'none';
+
+                items.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    const total = item.value * item.days;
+
+                    // 1. Célula Nome (Blindada contra XSS com textContent)
+                    const tdName = document.createElement('td');
+                    tdName.className = "p-3 text-white font-medium";
+                    tdName.textContent = item.name; 
+                    tr.appendChild(tdName);
+
+                    // 2. Célula Dias
+                    const tdDays = document.createElement('td');
+                    tdDays.className = "p-3 text-center";
+
+                    const inputDays = document.createElement('input');
+                    inputDays.type = "number";
+                    inputDays.value = item.days;
+                    inputDays.min = "0.5";
+                    inputDays.step = "0.5";
+                    inputDays.className = "w-12 bg-dark-800 border border-dark-600 rounded p-1 text-center text-white text-xs";
+                    inputDays.oninput = function() { updateItemDays(index, this.value); };
+
+                    tdDays.appendChild(inputDays);
+                    tr.appendChild(tdDays);
+
+                    // 3. Célula Valor Unitário
+                    const tdValue = document.createElement('td');
+                    tdValue.className = "p-3 text-right text-gray-400";
+                    tdValue.textContent = item.value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+                    tr.appendChild(tdValue);
+
+                    // 4. Célula Total
+                    const tdTotal = document.createElement('td');
+                    tdTotal.className = "p-3 text-right text-white font-bold";
+                    tdTotal.textContent = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+                    tr.appendChild(tdTotal);
+
+                    // 5. Célula Botão Remover
+                    const tdAction = document.createElement('td');
+                    tdAction.className = "p-3 text-right";
+
+                    const btnRemove = document.createElement('button');
+                    btnRemove.type = "button";
+                    btnRemove.textContent = "×";
+                    btnRemove.className = "text-red-500 hover:text-red-400 text-xl font-bold";
+                    btnRemove.onclick = function() { removeItem(index); };
+
+                    tdAction.appendChild(btnRemove);
+                    tr.appendChild(tdAction);
+
+                    tbody.appendChild(tr);
+                });
             }
-        })
-        .catch(err => alert("Erro de conexão."));
-    }
+
+            document.getElementById('items_json_input').value = JSON.stringify(items);
+        }
+
+        function calculateTotal() {
+            const laborDays = parseFloat(document.getElementById('labor_days').value);
+            const margin = parseInt(document.getElementById('margin_range').value);
+            const tax = parseFloat(document.getElementById('tax_input').value) || 0;
+            const extra = parseFloat(document.getElementById('extra_cost_visual').value) || 0;
+
+            document.getElementById('labor_days_display').innerText = laborDays;
+            document.getElementById('margin_display').innerText = margin + '%';
+            document.getElementById('tax_display').innerText = tax;
+
+            const hourlyRate = {{ config.hourly_rate if config and config.hourly_rate else 0 }};
+            const dailyRate = hourlyRate * 8;
+            const laborCost = laborDays * dailyRate;
+
+            let itemsCost = 0;
+            items.forEach(i => itemsCost += (i.value * i.days));
+
+            const totalCost = laborCost + itemsCost + extra;
+
+            const markup = (margin + tax) / 100;
+            let finalPrice = totalCost;
+            if (1 - markup > 0) {
+                finalPrice = totalCost / (1 - markup);
+            }
+
+            const profit = finalPrice - totalCost;
+
+            document.getElementById('finalPrice').innerText = finalPrice.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById('totalCost').innerText = totalCost.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById('netProfit').innerText = profit.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+
+            document.getElementById('items_json_input').value = JSON.stringify(items);
+            document.getElementById('extra_cost_input').value = extra;
+        }
+
+        function fillClientData() {
+            const select = document.getElementById('clientSelect');
+            const option = select.options[select.selectedIndex];
+
+            if (option.value) {
+                document.getElementById('client_cnpj').value = option.dataset.cnpj;
+                document.getElementById('client_phone').value = option.dataset.phone;
+                document.getElementById('client_address').value = option.dataset.address;
+            }
+        }
+
+        // --- UX: Quick Save atualiza a lista automaticamente ---
+        function quickSaveClient() {
+            const nameSelect = document.getElementById('clientSelect');
+            const name = nameSelect.options[nameSelect.selectedIndex].text;
+            const cnpj = document.getElementById('client_cnpj').value;
+            const phone = document.getElementById('client_phone').value;
+            const address = document.getElementById('client_address').value;
+
+            const csrfInput = document.querySelector('input[name="csrf_token"]');
+            const csrfToken = csrfInput ? csrfInput.value : '';
+
+            if (!name || name === "-- Novo ou Selecione --") {
+                alert("Por favor, selecione ou digite um nome válido.");
+                return;
+            }
+
+            fetch('/api/quick_save_client', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ name, cnpj, address, phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert("Cliente salvo!");
+
+                    let optionExists = false;
+                    for (let i = 0; i < nameSelect.options.length; i++) {
+                        if (nameSelect.options[i].text === data.name) {
+                            optionExists = true;
+                            nameSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (!optionExists) {
+                        const newOption = new Option(data.name, data.name);
+                        newOption.selected = true;
+                        newOption.dataset.cnpj = cnpj;
+                        newOption.dataset.phone = phone;
+                        newOption.dataset.address = address;
+
+                        nameSelect.add(newOption);
+                        nameSelect.value = data.name;
+                    }
+                } else {
+                    alert("Erro: " + (data.error || "Erro desconhecido"));
+                }
+            })
+            .catch(err => alert("Erro de conexão."));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderItems();
+            calculateTotal();
+        });
+    </script>
+    {% endblock %}
