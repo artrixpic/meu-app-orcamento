@@ -3,19 +3,16 @@ from decimal import Decimal
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 
-# CORREÇÃO DOS IMPORTS
 from app import db
 from app.models import Budget, BudgetItem, Client, Freelancer, Equipment
 from app.utils import safe_decimal
 
-# Função auxiliar segura para inteiros (caso não esteja no utils)
 def safe_int(value, default=0):
     try:
         return int(value)
     except:
         return default
 
-# CRIAÇÃO DO BLUEPRINT
 budget_bp = Blueprint('budget', __name__)
 
 @budget_bp.route('/orcamento/novo', methods=['GET', 'POST'])
@@ -26,11 +23,8 @@ def new_budget():
 @budget_bp.route('/orcamento/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_budget(id): 
-    # MUDANÇA DE SEGURANÇA (Anti-IDOR):
-    # Filtra direto pelo ID E pelo Dono. Se não for dele, dá 404.
+    # Busca segura (Anti-IDOR)
     budget = Budget.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-
-    # Não precisa mais checar manualmente 'if budget.user_id != ...'
     return handle_budget_form(budget)
 
 def handle_budget_form(budget):
@@ -39,20 +33,36 @@ def handle_budget_form(budget):
         return redirect(url_for('dashboard.onboarding'))
 
     if request.method == 'POST':
+        # 1. Captura dados do formulário PRIMEIRO
+        client_name = request.form.get('client', '').strip()
+        title = request.form.get('title', '').strip()
+
+        # Validação básica para evitar erro de banco
+        if not client_name or not title:
+            flash("Cliente e Título do projeto são obrigatórios.", "error")
+            return redirect(request.url)
+
+        # 2. Se for novo, cria a instância já com os dados obrigatórios
         if not budget:
-            budget = Budget(user_id=current_user.id)
+            budget = Budget(
+                user_id=current_user.id,
+                client=client_name,
+                title=title
+            )
             db.session.add(budget)
+            # Agora o flush funciona, pois client e title não são null
             db.session.flush() 
         else:
-            # Limpa itens antigos ao editar para recriar
+            # Se for edição, atualiza os campos e limpa itens antigos
+            budget.client = client_name
+            budget.title = title
             for item in budget.items: 
                 db.session.delete(item)
 
-        budget.client = request.form.get('client', '').strip()
+        # 3. Preenche o restante dos dados
         budget.client_cnpj = request.form.get('client_cnpj', '')[:20]
         budget.client_phone = request.form.get('client_phone', '')[:20]
         budget.client_address = request.form.get('client_address', '')[:200]
-        budget.title = request.form.get('title', '').strip()
         budget.description = request.form.get('description', '')
 
         budget.labor_days = safe_decimal(request.form.get('labor_days'))
@@ -66,7 +76,7 @@ def handle_budget_form(budget):
             if not isinstance(items_data_json, list): raise ValueError
         except:
             db.session.rollback()
-            flash("Erro nos itens.", "error")
+            flash("Erro ao processar itens do orçamento.", "error")
             return redirect(url_for('dashboard.dashboard'))
 
         items_cost_sum = Decimal('0.00')
@@ -117,7 +127,6 @@ def handle_budget_form(budget):
 
     return render_template('budget_form.html', 
                            config=config, 
-                           # As queries abaixo já estão seguras (filtram por user_id)
                            gears=Equipment.query.filter_by(user_id=current_user.id).all(), 
                            freelas=Freelancer.query.filter_by(user_id=current_user.id).all(), 
                            clients=Client.query.filter_by(user_id=current_user.id, active=True).all(), 
@@ -127,9 +136,7 @@ def handle_budget_form(budget):
 @budget_bp.route('/orcamento/print/<int:id>', methods=['GET'])
 @login_required
 def print_budget(id):
-    # MUDANÇA DE SEGURANÇA:
     budget = Budget.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-
     return render_template('print_budget.html', budget=budget, config=current_user.config)
 
 @budget_bp.route('/status/<int:id>/<new_status>', methods=['POST'])
@@ -138,10 +145,7 @@ def change_status(id, new_status):
     if new_status not in ['Pendente', 'Aprovado', 'Perdido']: 
         return redirect(url_for('dashboard.dashboard'))
 
-    # MUDANÇA DE SEGURANÇA:
-    # Garante que só altera status se for dono
     budget = Budget.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-
     budget.status = new_status
     db.session.commit()
     return redirect(url_for('dashboard.dashboard'))
