@@ -1,55 +1,46 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - CineOrça SaaS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background-color: #0f111a; color: white; }</style>
-</head>
-<body class="flex items-center justify-center h-screen px-4">
-    <div class="w-full max-w-md p-8 bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl">
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-white mb-2">Criar Conta</h1>
-            <p class="text-gray-400 text-sm">Comece a organizar seus orçamentos hoje</p>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-white mb-2 tracking-tighter">CINE<span class="text-neon-500">ORCA</span></h1>
+            <p class="text-gray-400">Crie sua conta para gerenciar orçamentos</p>
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="bg-red-500/20 text-red-500 p-3 rounded-lg mb-4 text-sm text-center border border-red-500/30">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div class="glass p-8 rounded-2xl border border-white/10 shadow-[0_0_50px_-20px_rgba(0,255,163,0.1)]">
+            <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-4">
-            
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div>
-                <label class="block text-sm text-gray-400 mb-1">Nome da Produtora / Seu Nome</label>
-                <input type="text" name="name" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:border-[#00ffa3] focus:outline-none transition">
-            </div>
-            <div>
-                <label class="block text-sm text-gray-400 mb-1">Email</label>
-                <input type="email" name="email" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:border-[#00ffa3] focus:outline-none transition">
-            </div>
-            <div>
-                <label class="block text-sm text-gray-400 mb-1">Senha</label>
-                <input type="password" name="password" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:border-[#00ffa3] focus:outline-none transition">
-            </div>
-            
-            <button type="submit" class="w-full bg-[#00ffa3] hover:bg-[#00cc82] text-black font-bold py-3 rounded-xl transition mt-4">
-                Criar Conta
-            </button>
-        </form>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">Nome Completo</label>
+                    <input type="text" name="name" required placeholder="Seu nome"
+                           class="w-full bg-dark-900/50 border border-dark-600 rounded-xl p-4 text-white placeholder-gray-600 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 outline-none transition">
+                </div>
 
-        <p class="text-center text-gray-500 text-sm mt-6">
-            Já tem conta? 
-            <a href="{{ url_for('auth.login') }}" class="text-[#00ffa3] hover:underline">Faça Login</a>
-        </p>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">Email</label>
+                    <input type="email" name="email" required placeholder="seu@email.com"
+                           class="w-full bg-dark-900/50 border border-dark-600 rounded-xl p-4 text-white placeholder-gray-600 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">Senha</label>
+                    <input type="password" name="password" required placeholder="••••••••"
+                           class="w-full bg-dark-900/50 border border-dark-600 rounded-xl p-4 text-white placeholder-gray-600 focus:border-neon-500 focus:ring-1 focus:ring-neon-500 outline-none transition">
+                </div>
+
+                <button type="submit" class="w-full bg-neon-500 hover:bg-neon-400 text-dark-900 font-black py-4 rounded-xl transition transform hover:scale-[1.02] shadow-lg shadow-neon-500/20">
+                    CRIAR CONTA
+                </button>
+            </form>
+        </div>
+
+        <div class="text-center mt-8">
+            <p class="text-gray-500">Já tem uma conta? 
+                <a href="{{ url_for('auth.login') }}" class="text-neon-500 hover:text-neon-400 font-bold hover:underline">Fazer Login</a>
+            </p>
+        </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

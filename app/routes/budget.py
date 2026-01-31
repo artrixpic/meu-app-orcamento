@@ -33,16 +33,16 @@ def handle_budget_form(budget):
         return redirect(url_for('dashboard.onboarding'))
 
     if request.method == 'POST':
-        # 1. Captura dados do formulário PRIMEIRO
-        client_name = request.form.get('client', '').strip()
-        title = request.form.get('title', '').strip()
+        # --- BLINDAGEM 1: Limitar tamanho de strings (Slicing) ---
+        client_name = request.form.get('client', '').strip()[:100]
+        title = request.form.get('title', '').strip()[:100]
 
-        # Validação básica para evitar erro de banco
+        # Validação básica
         if not client_name or not title:
             flash("Cliente e Título do projeto são obrigatórios.", "error")
             return redirect(request.url)
 
-        # 2. Se for novo, cria a instância já com os dados obrigatórios
+        # Criação ou Edição
         if not budget:
             budget = Budget(
                 user_id=current_user.id,
@@ -50,24 +50,29 @@ def handle_budget_form(budget):
                 title=title
             )
             db.session.add(budget)
-            # Agora o flush funciona, pois client e title não são null
             db.session.flush() 
         else:
-            # Se for edição, atualiza os campos e limpa itens antigos
             budget.client = client_name
             budget.title = title
             for item in budget.items: 
                 db.session.delete(item)
 
-        # 3. Preenche o restante dos dados
+        # --- BLINDAGEM 2: Mais Slicing para proteger o banco ---
         budget.client_cnpj = request.form.get('client_cnpj', '')[:20]
         budget.client_phone = request.form.get('client_phone', '')[:20]
         budget.client_address = request.form.get('client_address', '')[:200]
-        budget.description = request.form.get('description', '')
+        budget.description = request.form.get('description', '')[:5000] # Limite generoso, mas existe
+
+        # --- BLINDAGEM 3: Clamp de Percentuais (0 a 100) ---
+        # Margem
+        raw_margin = safe_int(request.form.get('margin_range'), 30)
+        budget.margin_percent = max(0, min(100, raw_margin))
+
+        # Imposto
+        raw_tax = safe_decimal(request.form.get('tax_percent'))
+        budget.tax_percent = max(Decimal('0'), min(Decimal('100'), raw_tax))
 
         budget.labor_days = safe_decimal(request.form.get('labor_days'))
-        budget.margin_percent = safe_int(request.form.get('margin_range'), 30)
-        budget.tax_percent = safe_decimal(request.form.get('tax_percent'))
 
         try:
             items_json_str = request.form.get('items_json', '[]')
@@ -84,8 +89,8 @@ def handle_budget_form(budget):
         for item in items_data_json:
             days = safe_decimal(item.get('days', 1))
             val = safe_decimal(item.get('value', 0))
-            name = str(item.get('name', 'Item')).strip()
-            item_type = str(item.get('type', 'Outro'))
+            name = str(item.get('name', 'Item')).strip()[:100] # Slicing aqui também
+            item_type = str(item.get('type', 'Outro'))[:20]
 
             new_item = BudgetItem(
                 budget_id=budget.id, name=name, value=val, item_type=item_type, days=days 
@@ -129,6 +134,7 @@ def handle_budget_form(budget):
                            config=config, 
                            gears=Equipment.query.filter_by(user_id=current_user.id).all(), 
                            freelas=Freelancer.query.filter_by(user_id=current_user.id).all(), 
+                           # Filtra apenas clientes ativos
                            clients=Client.query.filter_by(user_id=current_user.id, active=True).all(), 
                            budget=budget,
                            items_data=items_data) 

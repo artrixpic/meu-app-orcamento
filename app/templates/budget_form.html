@@ -337,8 +337,8 @@
         const cnpj = document.getElementById('client_cnpj').value;
         const phone = document.getElementById('client_phone').value;
         const address = document.getElementById('client_address').value;
-
-        // CORREÇÃO: Pega o CSRF do input hidden do próprio form (mais garantido)
+        
+        // CSRF Token
         const csrfInput = document.querySelector('input[name="csrf_token"]');
         const csrfToken = csrfInput ? csrfInput.value : '';
 
@@ -351,24 +351,43 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken // Header padrão do Flask-WTF CSRFProtect
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({ name, cnpj, address, phone })
         })
         .then(response => response.json())
         .then(data => {
             if(data.success) {
-                alert("Cliente salvo com sucesso!");
+                alert("Cliente salvo!");
+                
+                // --- ATUALIZAÇÃO DE UX ---
+                // Verifica se a opção já existe, se não, cria
+                let optionExists = false;
+                for (let i = 0; i < nameSelect.options.length; i++) {
+                    if (nameSelect.options[i].text === data.name) {
+                        optionExists = true;
+                        nameSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+
+                if (!optionExists) {
+                    // Cria nova opção e seleciona
+                    const newOption = new Option(data.name, data.name);
+                    newOption.selected = true;
+                    
+                    // Adiciona metadados para preenchimento automático futuro
+                    newOption.dataset.cnpj = cnpj;
+                    newOption.dataset.phone = phone;
+                    newOption.dataset.address = address;
+                    
+                    nameSelect.add(newOption);
+                    // Remove a seleção do anterior e foca no novo
+                    nameSelect.value = data.name;
+                }
             } else {
-                alert("Erro ao salvar: " + (data.error || "Erro desconhecido"));
+                alert("Erro: " + (data.error || "Erro desconhecido"));
             }
         })
         .catch(err => alert("Erro de conexão."));
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        renderItems();
-        calculateTotal();
-    });
-</script>
-{% endblock %}
